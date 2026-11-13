@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -67,6 +68,7 @@ class DamageDetectorModel(BaseModelInterface):
         self._device = "cpu"
         self._checksum = ""
         self._raw_names = {}
+        self._lock = threading.Lock()  # one YOLO predictor is not safe for concurrent calls (video jobs + requests)
         self.load()
 
     def load(self) -> None:
@@ -115,12 +117,13 @@ class DamageDetectorModel(BaseModelInterface):
         np_img = np.array(image.convert("RGB"))
 
         try:
-            results = self._model.predict(
-                source=np_img,
-                conf=conf_threshold,
-                iou=iou_threshold,
-                verbose=False,
-            )
+            with self._lock:
+                results = self._model.predict(
+                    source=np_img,
+                    conf=conf_threshold,
+                    iou=iou_threshold,
+                    verbose=False,
+                )
         except Exception as e:
             logger.error("YOLO inference failed: %s", e)
             return {

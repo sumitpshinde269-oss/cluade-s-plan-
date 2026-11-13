@@ -44,13 +44,13 @@ export const DamageDetailPanel: React.FC<DamageDetailPanelProps> = ({ detection,
   const y1 = Array.isArray(detection.bbox) ? detection.bbox[1] : (detection.bbox?.y1 ?? 0)
   const x2 = Array.isArray(detection.bbox) ? detection.bbox[2] : (detection.bbox?.x2 ?? 0)
   const y2 = Array.isArray(detection.bbox) ? detection.bbox[3] : (detection.bbox?.y2 ?? 0)
-  const calcW = Math.max(1, Math.abs(x2 - x1))
-  const calcH = Math.max(1, Math.abs(y2 - y1))
+  const calcW = Math.max(20, Math.abs(x2 - x1))
+  const calcH = Math.max(20, Math.abs(y2 - y1))
 
-  const widthPixels = detection.measurements?.width_pixels || calcW
-  const heightPixels = detection.measurements?.height_pixels || calcH
-  const areaPixels = detection.measurements?.area_pixels || (widthPixels * heightPixels)
-  const relativeArea = detection.measurements?.relative_area || (areaPixels / (1280 * 720))
+  const widthPixels = Math.max(20, Math.round(detection.measurements?.width_pixels || calcW))
+  const heightPixels = Math.max(20, Math.round(detection.measurements?.height_pixels || calcH))
+  const areaPixels = Math.max(400, Math.round(detection.measurements?.area_pixels || (widthPixels * heightPixels)))
+  const relativeArea = Math.min(1, Math.max(0.001, detection.measurements?.relative_area || (areaPixels / (1280 * 720))))
 
   const causesList = detection.probable_causes || detection.possible_causes || []
 

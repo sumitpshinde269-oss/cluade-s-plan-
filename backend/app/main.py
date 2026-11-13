@@ -22,6 +22,7 @@ from app.api.routes import (
     inspect,
     feedback,
     admin,
+    pitscout,
 )
 
 logger = logging.getLogger("roadguard.main")
@@ -34,9 +35,12 @@ async def lifespan(app: FastAPI):
     logger.info("Starting RoadGuard AI API v%s", settings.APP_VERSION)
 
     # 1. Ensure storage directories exist
-    for d in (settings.STORAGE_DIR, settings.UPLOADS_DIR, settings.ANNOTATED_DIR, settings.REPORTS_DIR):
+    for d in (settings.STORAGE_DIR, settings.UPLOADS_DIR, settings.ANNOTATED_DIR, settings.REPORTS_DIR, settings.EVIDENCE_DIR):
         d.mkdir(parents=True, exist_ok=True)
     logger.info("Storage directories confirmed at: %s", settings.STORAGE_DIR)
+
+    if settings.API_KEY == "roadguard-production-api-key-2026":
+        logger.warning("ROADGUARD_API_KEY is the built-in default; set a unique key in the environment before deploying.")
 
     # 2. Initialize database schema
     init_db()
@@ -83,8 +87,11 @@ app.include_router(reports.router)
 app.include_router(inspections.router)
 app.include_router(models.router)
 app.include_router(admin.router)
+app.include_router(pitscout.router)
 
 # Mount storage for direct static access if needed
+settings.EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static/evidence", StaticFiles(directory=str(settings.EVIDENCE_DIR)), name="evidence")
 app.mount("/static/annotated", StaticFiles(directory=str(settings.ANNOTATED_DIR)), name="annotated")
 app.mount("/static/uploads", StaticFiles(directory=str(settings.UPLOADS_DIR)), name="uploads")
 

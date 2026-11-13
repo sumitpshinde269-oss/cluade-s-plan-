@@ -31,6 +31,7 @@ interface PipelineStep {
 export default function InspectPage() {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [imageDims, setImageDims] = useState<{ width: number; height: number }>({ width: 1280, height: 720 })
   const [isUploading, setIsUploading] = useState(false)
   const [analysisId, setAnalysisId] = useState<string | null>(null)
   const [analysisResult, setAnalysisResult] = useState<any | null>(null)
@@ -47,11 +48,41 @@ export default function InspectPage() {
     { id: 'report', name: 'Stage 8: Inspection Report Assembly', status: 'idle' },
   ])
 
+  // Restore cached preview on initial client mount if available
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('roadguard_inspect_preview')
+      if (cached && !previewUrl) {
+        setPreviewUrl(cached)
+      }
+    }
+  }, [previewUrl])
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const selected = acceptedFiles[0]
       setFile(selected)
-      setPreviewUrl(URL.createObjectURL(selected))
+
+      // Convert to base64 Data URL for instant, permanent preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        setPreviewUrl(dataUrl)
+        try {
+          sessionStorage.setItem('roadguard_inspect_preview', dataUrl)
+        } catch {}
+
+        // Decode natural dimensions
+        const img = new Image()
+        img.onload = () => {
+          if (img.naturalWidth && img.naturalHeight) {
+            setImageDims({ width: img.naturalWidth, height: img.naturalHeight })
+          }
+        }
+        img.src = dataUrl
+      }
+      reader.readAsDataURL(selected)
+
       setAnalysisResult(null)
       setError(null)
       setSelectedDetectionId(null)
@@ -430,14 +461,20 @@ export default function InspectPage() {
             {/* Left: Interactive Image Viewer */}
             <div className="lg:col-span-8 flex flex-col gap-4">
               <DamageViewer
-                originalImageUrl={previewUrl || `${API_BASE}/api/v1/analysis/${analysisResult.analysis_id}/original-image`}
+                originalImageUrl={
+                  previewUrl ||
+                  analysisResult?.image_data ||
+                  analysisResult?.original_image_url ||
+                  (typeof window !== 'undefined' ? sessionStorage.getItem('roadguard_inspect_preview') : '') ||
+                  `${API_BASE}/api/v1/analysis/${analysisResult.analysis_id}/original-image`
+                }
                 annotatedImageUrl={
                   analysisResult.annotated_image_url
                     ? `${API_BASE}${analysisResult.annotated_image_url}`
                     : null
                 }
-                imageWidth={analysisResult.image_info?.width || 1280}
-                imageHeight={analysisResult.image_info?.height || 720}
+                imageWidth={imageDims.width || analysisResult.image_info?.width || 1280}
+                imageHeight={imageDims.height || analysisResult.image_info?.height || 720}
                 detections={normalizedDetections}
                 selectedDetectionId={selectedDetectionId || (normalizedDetections[0]?.detection_id ?? null)}
                 onSelectDetection={setSelectedDetectionId}

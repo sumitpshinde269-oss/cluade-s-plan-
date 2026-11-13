@@ -65,6 +65,24 @@ class Settings:
         "alligator_crack": 0.14,
     }
 
+    # --- PitScout: pothole identity / duplicate matching (all env-overridable) ---
+    # shortcut: thresholds are provisional; calibrated only on track pairs from one test
+    # video (see TESTING_REPORT.md). Recalibrate on labelled same/different pothole pairs.
+    MATCH_BASE_RADIUS_M: float = float(os.getenv("MATCH_BASE_RADIUS_M", "15"))
+    MATCH_MAX_RADIUS_M: float = float(os.getenv("MATCH_MAX_RADIUS_M", "100"))
+    UNKNOWN_ACCURACY_M: float = float(os.getenv("UNKNOWN_ACCURACY_M", "25"))  # assumed when no accuracy given
+    VISUAL_MATCH_MIN: float = float(os.getenv("VISUAL_MATCH_MIN", "0.60"))
+    VISUAL_REJECT_BELOW: float = float(os.getenv("VISUAL_REJECT_BELOW", "0.25"))
+
+    # --- PitScout: video ---
+    EVIDENCE_DIR: Path = BASE_DIR / "storage" / "evidence"
+    ALLOWED_VIDEO_EXTENSIONS: set = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+    MAX_VIDEO_SIZE_MB: int = int(os.getenv("MAX_VIDEO_SIZE_MB", "200"))
+    MAX_VIDEO_SECONDS: int = int(os.getenv("MAX_VIDEO_SECONDS", "600"))
+    VIDEO_DEFAULT_SAMPLE_FPS: float = float(os.getenv("VIDEO_DEFAULT_SAMPLE_FPS", "5"))
+    VIDEO_MIN_TRACK_HITS: int = int(os.getenv("VIDEO_MIN_TRACK_HITS", "2"))
+    UPLOAD_RATE_LIMIT_PER_MIN: int = int(os.getenv("UPLOAD_RATE_LIMIT_PER_MIN", "30"))
+
     # Severity thresholds
     SEVERITY_HIGH_AREA_RATIO: float = 0.05
     SEVERITY_CRITICAL_AREA_RATIO: float = 0.15

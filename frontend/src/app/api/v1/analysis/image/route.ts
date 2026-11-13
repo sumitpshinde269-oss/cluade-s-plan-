@@ -11,12 +11,16 @@ export async function POST(req: Request) {
     }
 
     const backendUrl = process.env.BACKEND_URL
-    if (backendUrl) {
+    if (backendUrl && !backendUrl.includes('localhost')) {
       try {
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 3500)
         const remoteRes = await fetch(`${backendUrl}/api/v1/analysis/image`, {
           method: 'POST',
           body: formData,
+          signal: controller.signal,
         })
+        clearTimeout(timeout)
         if (remoteRes.ok) return NextResponse.json(await remoteRes.json())
       } catch (err) {
         // Fall back to serverless computer vision engine

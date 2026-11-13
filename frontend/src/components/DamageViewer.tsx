@@ -44,18 +44,18 @@ interface DamageViewerProps {
 }
 
 const CLASS_COLORS: Record<string, { stroke: string; bg: string; text: string }> = {
-  pothole: { stroke: '#EF4444', bg: 'rgba(239, 68, 68, 0.25)', text: '#FCA5A5' },
-  Pothole: { stroke: '#EF4444', bg: 'rgba(239, 68, 68, 0.25)', text: '#FCA5A5' },
-  manhole_cover: { stroke: '#A855F7', bg: 'rgba(168, 85, 247, 0.25)', text: '#E9D5FF' },
-  Manhole: { stroke: '#A855F7', bg: 'rgba(168, 85, 247, 0.25)', text: '#E9D5FF' },
+  pothole: { stroke: '#EF4444', bg: 'rgba(239, 68, 68, 0.35)', text: '#FCA5A5' },
+  Pothole: { stroke: '#EF4444', bg: 'rgba(239, 68, 68, 0.35)', text: '#FCA5A5' },
+  manhole_cover: { stroke: '#A855F7', bg: 'rgba(168, 85, 247, 0.30)', text: '#E9D5FF' },
+  Manhole: { stroke: '#A855F7', bg: 'rgba(168, 85, 247, 0.30)', text: '#E9D5FF' },
   sewage_hole: { stroke: '#E11D48', bg: 'rgba(225, 29, 72, 0.35)', text: '#FECDD3' },
-  longitudinal_crack: { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.25)', text: '#BAE6FD' },
-  'Longitudinal Crack': { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.25)', text: '#BAE6FD' },
-  transverse_crack: { stroke: '#FACC15', bg: 'rgba(250, 204, 21, 0.25)', text: '#FEF08A' },
-  'Transverse Crack': { stroke: '#FACC15', bg: 'rgba(250, 204, 21, 0.25)', text: '#FEF08A' },
-  alligator_crack: { stroke: '#FB923C', bg: 'rgba(251, 146, 60, 0.25)', text: '#FED7AA' },
-  'Alligator Crack': { stroke: '#FB923C', bg: 'rgba(251, 146, 60, 0.25)', text: '#FED7AA' },
-  Crack: { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.25)', text: '#BAE6FD' },
+  longitudinal_crack: { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.30)', text: '#BAE6FD' },
+  'Longitudinal Crack': { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.30)', text: '#BAE6FD' },
+  transverse_crack: { stroke: '#FACC15', bg: 'rgba(250, 204, 21, 0.30)', text: '#FEF08A' },
+  'Transverse Crack': { stroke: '#FACC15', bg: 'rgba(250, 204, 21, 0.30)', text: '#FEF08A' },
+  alligator_crack: { stroke: '#FB923C', bg: 'rgba(251, 146, 60, 0.30)', text: '#FED7AA' },
+  'Alligator Crack': { stroke: '#FB923C', bg: 'rgba(251, 146, 60, 0.30)', text: '#FED7AA' },
+  Crack: { stroke: '#38BDF8', bg: 'rgba(56, 189, 248, 0.30)', text: '#BAE6FD' },
 }
 
 export const DamageViewer: React.FC<DamageViewerProps> = ({
@@ -72,6 +72,7 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
   const [showLabels, setShowLabels] = useState(true)
   const [activeTab, setActiveTab] = useState<'interactive' | 'compare'>('interactive')
   const [imgError, setImgError] = useState(false)
+  const [loadedDims, setLoadedDims] = useState<{ width: number; height: number } | null>(null)
   const [visibleClasses, setVisibleClasses] = useState<Record<string, boolean>>({
     pothole: true,
     Pothole: true,
@@ -103,6 +104,9 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
   const handleZoomIn = () => setZoom((z) => Math.min(z + 0.25, 3))
   const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.75))
   const handleResetZoom = () => setZoom(1)
+
+  const effectiveWidth = loadedDims?.width || imageWidth || 1280
+  const effectiveHeight = loadedDims?.height || imageHeight || 720
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#0E1726] p-4 shadow-xl">
@@ -228,58 +232,72 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
       {/* Main View Area */}
       <div
         ref={containerRef}
-        className="relative overflow-auto rounded-xl border border-white/10 bg-slate-950 flex items-center justify-center min-h-[480px] max-h-[700px]"
+        className="relative overflow-auto rounded-xl border border-white/10 bg-slate-950 flex items-center justify-center min-h-[480px] max-h-[720px] p-2"
       >
         {activeTab === 'compare' && annotatedImageUrl ? (
-          <div className="w-full h-full max-h-[640px] flex items-center justify-center p-2">
+          <div className="w-full h-full max-h-[660px] flex items-center justify-center p-2">
             <ReactCompareSlider
               itemOne={<ReactCompareSliderImage src={originalImageUrl} alt="Original Image" />}
               itemTwo={<ReactCompareSliderImage src={annotatedImageUrl} alt="Annotated Image" />}
-              className="rounded-lg max-h-[600px] object-contain shadow-2xl"
+              className="rounded-lg max-h-[620px] object-contain shadow-2xl"
             />
           </div>
         ) : (
           <div
-            className="relative transition-transform duration-150 ease-out origin-center"
+            className="relative inline-flex items-center justify-center transition-transform duration-150 ease-out origin-center"
             style={{ transform: `scale(${zoom})` }}
           >
             {/* The Base Road Image or Interactive Road Backdrop */}
-            {!imgError ? (
+            {originalImageUrl && !imgError ? (
               <img
                 src={originalImageUrl}
-                alt="Road Inspection"
+                alt="Road Surface Image"
+                onLoad={(e) => {
+                  const el = e.currentTarget
+                  if (el.naturalWidth && el.naturalHeight) {
+                    setLoadedDims({ width: el.naturalWidth, height: el.naturalHeight })
+                  }
+                }}
                 onError={() => setImgError(true)}
-                className="max-h-[640px] w-auto object-contain rounded-lg select-none shadow-2xl"
+                className="max-h-[640px] max-w-full w-auto h-auto object-contain rounded-lg select-none shadow-2xl block"
               />
             ) : (
               <div
-                style={{ width: imageWidth > 0 ? Math.min(840, imageWidth) : 840, height: imageHeight > 0 ? (imageHeight / (imageWidth || 1280)) * 840 : 472 }}
-                className="relative rounded-lg bg-gradient-to-b from-[#151D2A] via-[#101723] to-[#0A0F18] border border-white/10 flex items-center justify-center overflow-hidden"
+                style={{
+                  width: effectiveWidth > 0 ? Math.min(840, effectiveWidth) : 840,
+                  height: effectiveHeight > 0 ? (effectiveHeight / (effectiveWidth || 1280)) * 840 : 472,
+                }}
+                className="relative rounded-lg bg-gradient-to-b from-[#1A2332] via-[#101723] to-[#0A0F18] border border-cyan-500/20 flex flex-col items-center justify-center overflow-hidden shadow-2xl"
               >
                 {/* Simulated Road Surface Pattern */}
-                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#475569_1px,transparent_1px)] [background-size:16px_16px]" />
+                <div className="absolute inset-0 opacity-25 bg-[radial-gradient(#475569_1px,transparent_1px)] [background-size:16px_16px]" />
                 {/* Center road divider stripe */}
-                <div className="absolute inset-y-0 left-1/2 w-1 border-r-2 border-dashed border-amber-400/40 -translate-x-1/2" />
-                <span className="relative z-10 text-xs font-mono text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
-                  Road Surface Analysis Canvas ({imageWidth} &times; {imageHeight})
+                <div className="absolute inset-y-0 left-1/2 w-1 border-r-2 border-dashed border-amber-400/50 -translate-x-1/2" />
+                <span className="relative z-10 text-xs font-mono font-bold text-cyan-300 bg-slate-900/90 px-4 py-2 rounded-full border border-cyan-500/30 shadow-lg">
+                  Road Surface Analysis Canvas ({effectiveWidth} &times; {effectiveHeight} px)
                 </span>
               </div>
             )}
 
             {/* SVG Interactive Overlay */}
-            {showBoxes && imageWidth > 0 && imageHeight > 0 && (
+            {showBoxes && effectiveWidth > 0 && effectiveHeight > 0 && (
               <svg
-                viewBox={`0 0 ${imageWidth} ${imageHeight}`}
-                className="absolute inset-0 h-full w-full pointer-events-none drop-shadow-md"
+                viewBox={`0 0 ${effectiveWidth} ${effectiveHeight}`}
+                className="absolute inset-0 h-full w-full pointer-events-none drop-shadow-lg"
               >
                 <defs>
-                  {/* Glowing filter for high-priority defects */}
-                  <filter id="potholeGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor="#EF4444" floodOpacity="0.8" />
+                  {/* Glowing filter for high-priority pothole defects */}
+                  <filter id="potholeGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="8" floodColor="#EF4444" floodOpacity="0.95" />
                   </filter>
-                  <filter id="selectGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#22D3EE" floodOpacity="0.9" />
+                  <filter id="selectGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="7" floodColor="#22D3EE" floodOpacity="0.95" />
                   </filter>
+                  <radialGradient id="potholeHighlightGrad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#EF4444" stopOpacity="0.45" />
+                    <stop offset="70%" stopColor="#EF4444" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#EF4444" stopOpacity="0.05" />
+                  </radialGradient>
                 </defs>
 
                 {detections.map((det) => {
@@ -298,14 +316,26 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
 
                   // Robust coordinates extraction (handles both [x1, y1, x2, y2] and {x1, y1, x2, y2})
                   const rawBbox = det.bbox as any
-                  const x1 = Array.isArray(rawBbox) ? rawBbox[0] : (rawBbox?.x1 ?? 0)
-                  const y1 = Array.isArray(rawBbox) ? rawBbox[1] : (rawBbox?.y1 ?? 0)
-                  const x2 = Array.isArray(rawBbox) ? rawBbox[2] : (rawBbox?.x2 ?? 0)
-                  const y2 = Array.isArray(rawBbox) ? rawBbox[3] : (rawBbox?.y2 ?? 0)
+                  let x1 = Array.isArray(rawBbox) ? rawBbox[0] : (rawBbox?.x1 ?? 0)
+                  let y1 = Array.isArray(rawBbox) ? rawBbox[1] : (rawBbox?.y1 ?? 0)
+                  let x2 = Array.isArray(rawBbox) ? rawBbox[2] : (rawBbox?.x2 ?? 0)
+                  let y2 = Array.isArray(rawBbox) ? rawBbox[3] : (rawBbox?.y2 ?? 0)
 
-                  const width = Math.max(12, Math.abs(x2 - x1))
-                  const height = Math.max(12, Math.abs(y2 - y1))
-                  const cornerSize = Math.min(18, Math.min(width, height) / 3)
+                  // Scale coordinates if original natural dims differ from input imageWidth
+                  if (loadedDims && imageWidth > 0 && loadedDims.width !== imageWidth) {
+                    const scaleX = loadedDims.width / imageWidth
+                    const scaleY = loadedDims.height / imageHeight
+                    x1 *= scaleX
+                    x2 *= scaleX
+                    y1 *= scaleY
+                    y2 *= scaleY
+                  }
+
+                  const width = Math.max(20, Math.abs(x2 - x1))
+                  const height = Math.max(20, Math.abs(y2 - y1))
+                  const cornerSize = Math.min(24, Math.min(width, height) / 3)
+                  const centerX = x1 + width / 2
+                  const centerY = y1 + height / 2
 
                   return (
                     <g
@@ -319,50 +349,57 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
                         y={y1}
                         width={width}
                         height={height}
-                        fill={isSelected ? (isPothole ? 'rgba(239, 68, 68, 0.45)' : col.bg) : (isPothole ? 'rgba(239, 68, 68, 0.30)' : 'rgba(0,0,0,0.15)')}
+                        fill={isPothole ? 'url(#potholeHighlightGrad)' : (isSelected ? 'rgba(34, 211, 238, 0.25)' : col.bg)}
                         stroke={col.stroke}
-                        strokeWidth={isSelected ? 4 : (isPothole ? 3 : 2)}
-                        strokeDasharray={isSelected ? '6,3' : undefined}
+                        strokeWidth={isSelected ? 4.5 : (isPothole ? 3.5 : 2.5)}
+                        strokeDasharray={isSelected ? '8,4' : undefined}
                         onClick={() => onSelectDetection && onSelectDetection(det.detection_id)}
                         className="transition-all hover:stroke-cyan-300"
-                        rx={4}
+                        rx={6}
                       />
 
-                      {/* High-tech Corner Accent Brackets for Potholes */}
+                      {/* Pulsing center reticle for potholes */}
                       {isPothole && (
-                        <g stroke="#FFFFFF" strokeWidth={2.5} fill="none">
-                          {/* Top-left */}
-                          <path d={`M ${x1} ${y1 + cornerSize} L ${x1} ${y1} L ${x1 + cornerSize} ${y1}`} />
-                          {/* Top-right */}
-                          <path d={`M ${x1 + width - cornerSize} ${y1} L ${x1 + width} ${y1} L ${x1 + width} ${y1 + cornerSize}`} />
-                          {/* Bottom-left */}
-                          <path d={`M ${x1} ${y1 + height - cornerSize} L ${x1} ${y1 + height} L ${x1 + cornerSize} ${y1 + height}`} />
-                          {/* Bottom-right */}
-                          <path d={`M ${x1 + width - cornerSize} ${y1 + height} L ${x1 + width} ${y1 + height} L ${x1 + width} ${y1 + height - cornerSize}`} />
+                        <g pointerEvents="none">
+                          <circle cx={centerX} cy={centerY} r={Math.min(20, width / 4)} fill="none" stroke="#EF4444" strokeWidth="2" strokeDasharray="4 2" opacity="0.8" />
+                          <circle cx={centerX} cy={centerY} r="4" fill="#FFFFFF" />
                         </g>
                       )}
+
+                      {/* High-tech Corner Accent Brackets */}
+                      <g stroke="#FFFFFF" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" fill="none">
+                        {/* Top-left */}
+                        <path d={`M ${x1} ${y1 + cornerSize} L ${x1} ${y1} L ${x1 + cornerSize} ${y1}`} />
+                        {/* Top-right */}
+                        <path d={`M ${x1 + width - cornerSize} ${y1} L ${x1 + width} ${y1} L ${x1 + width} ${y1 + cornerSize}`} />
+                        {/* Bottom-left */}
+                        <path d={`M ${x1} ${y1 + height - cornerSize} L ${x1} ${y1} L ${x1 + cornerSize} ${y1}`} />
+                        {/* Bottom-right */}
+                        <path d={`M ${x1 + width - cornerSize} ${y1 + height} L ${x1 + width} ${y1 + height} L ${x1 + width} ${y1 + height - cornerSize}`} />
+                      </g>
 
                       {/* Label badge */}
                       {showLabels && (
                         <g
-                          transform={`translate(${x1}, ${Math.max(20, y1 - 8)})`}
+                          transform={`translate(${x1}, ${Math.max(26, y1 - 10)})`}
                           onClick={() => onSelectDetection && onSelectDetection(det.detection_id)}
                         >
                           <rect
                             x={0}
-                            y={-18}
-                            width={Math.max(120, (className.length + 10) * 8.5)}
-                            height={20}
+                            y={-22}
+                            width={Math.max(160, (className.length + 14) * 8.5)}
+                            height={24}
                             fill="#0B1220"
                             stroke={col.stroke}
-                            strokeWidth={1.5}
-                            rx={4}
+                            strokeWidth={2}
+                            rx={5}
                           />
+                          <circle cx={10} cy={-10} r={4} fill={col.stroke} />
                           <text
-                            x={6}
-                            y={-4}
-                            fill={col.text}
-                            fontSize={11}
+                            x={20}
+                            y={-6}
+                            fill="#FFFFFF"
+                            fontSize={11.5}
                             fontFamily="monospace"
                             fontWeight="bold"
                           >
@@ -379,9 +416,9 @@ export const DamageViewer: React.FC<DamageViewerProps> = ({
         )}
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-500 px-1 font-mono">
-        <span>Image Resolution: {imageWidth} &times; {imageHeight} px</span>
-        <span>{detections.length} defect(s) detected</span>
+      <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-mono">
+        <span>Image Resolution: {effectiveWidth} &times; {effectiveHeight} px</span>
+        <span className="text-cyan-400 font-bold">{detections.length} defect(s) detected</span>
       </div>
     </div>
   )

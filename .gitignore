@@ -52,3 +52,8 @@ datasets/processed/*
 models/runs/
 runs/
 !models/detection/best.pt
+
+# PitScout evidence (user-submitted images / video frames)
+backend/storage/evidence/*
+!backend/storage/evidence/.gitkeep
+storage/evidence/*
