@@ -93,6 +93,21 @@ export default function InspectPage() {
       const uploadData = await res.json()
       setAnalysisId(uploadData.analysis_id)
 
+      // If analysis completed synchronously (e.g. serverless or direct response), render immediately
+      if (
+        uploadData.status === 'completed' ||
+        uploadData.pipeline_status === 'completed' ||
+        (uploadData.detections && uploadData.detections.length > 0)
+      ) {
+        setAnalysisResult(uploadData)
+        setIsUploading(false)
+        setPipelineSteps((prev) => prev.map((s) => ({ ...s, status: 'completed' })))
+        if (uploadData.detections && uploadData.detections.length > 0) {
+          setSelectedDetectionId(uploadData.detections[0].detection_id || uploadData.detections[0].id)
+        }
+        return
+      }
+
       // Mark validation done and authenticity running
       setPipelineSteps((prev) =>
         prev.map((s, idx) => {

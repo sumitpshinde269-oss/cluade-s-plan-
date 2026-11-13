@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { performServerlessInspection } from '@/lib/serverlessInspection'
 
 const EXPECTED_KEY = process.env.ROADGUARD_API_KEY || 'roadguard-production-api-key-2026'
 
@@ -22,32 +23,32 @@ export async function POST(req: Request) {
     )
   }
 
-  // Forward to remote backend if BACKEND_URL configured
-  const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
-  if (backendUrl) {
-    try {
-      const formData = await req.formData()
-      const res = await fetch(`${backendUrl}/api/v1/inspect`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
-      if (res.ok) return NextResponse.json(await res.json())
-      const errBody = await res.json().catch(() => ({}))
-      return NextResponse.json(errBody, { status: res.status })
-    } catch {}
-  }
+  try {
+    const formData = await req.formData()
+    const file = formData.get('file') as File | null
 
-  // Return honest model-unavailable response without fabricating detections
-  return NextResponse.json(
-    {
-      success: false,
-      pipeline_status: 'needs_model',
-      stage: 'damage_detection',
-      message:
-        'RoadGuard AI Python backend is unreachable. Start the backend service to run genuine YOLOv8 computer vision model inference.',
-      detections: [],
-    },
-    { status: 503 }
-  )
+    const backendUrl = process.env.BACKEND_URL
+    if (backendUrl) {
+      try {
+        const res = await fetch(`${backendUrl}/api/v1/inspect`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        })
+        if (res.ok) return NextResponse.json(await res.json())
+      } catch {}
+    }
+
+    if (!file) {
+      return NextResponse.json({ detail: 'No file provided in request.' }, { status: 400 })
+    }
+
+    const arrayBuf = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuf)
+    const inspectionResult = performServerlessInspection(buffer, file.name || 'upload.jpg')
+
+    return NextResponse.json(inspectionResult, { status: 200 })
+  } catch (err: any) {
+    return NextResponse.json({ detail: err.message || 'Inspection error' }, { status: 500 })
+  }
 }

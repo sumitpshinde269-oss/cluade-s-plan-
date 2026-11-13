@@ -14,20 +14,33 @@ import {
   Menu,
   X,
   ExternalLink,
+  Camera,
+  Film,
+  Map as MapIcon,
+  ClipboardList,
+  History,
 } from 'lucide-react'
 
 export const Navigation = () => {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const navItems = [
+  const primaryItems = [
     { label: 'Overview', href: '/', icon: ShieldAlert },
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Report', href: '/report', icon: Camera },
+    { label: 'Video', href: '/video', icon: Film },
+    { label: 'Map', href: '/map', icon: MapIcon },
+    { label: 'Potholes', href: '/potholes', icon: ClipboardList },
+    { label: 'History', href: '/history', icon: History },
+  ]
+  const moreItems = [
     { label: 'Inspect Road', href: '/inspect', icon: ScanEye },
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Analytics', href: '/analytics', icon: BarChart3 },
     { label: 'Datasets', href: '/datasets', icon: Database },
     { label: 'Model Training', href: '/training', icon: Cpu },
   ]
+  const navItems = [...primaryItems, ...moreItems]
 
   return (
     <>
@@ -40,18 +53,18 @@ export const Navigation = () => {
             </div>
             <div>
               <span className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-                RoadGuard <span className="text-cyan-400">AI</span>
+                Pit<span className="text-cyan-400">Scout</span>
               </span>
               <span className="block text-[10px] tracking-wider text-slate-400 uppercase -mt-1 font-mono">
-                CRDDC Intelligence
+                Pothole Intelligence
               </span>
             </div>
           </Link>
         </div>
 
         {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
+        <nav className="hidden md:flex items-center gap-1" aria-label="Main">
+          {primaryItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             return (
@@ -69,16 +82,28 @@ export const Navigation = () => {
               </Link>
             )
           })}
+          <details className="relative">
+            <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white">
+              More
+            </summary>
+            <div className="absolute right-0 top-full z-50 mt-1 flex w-48 flex-col rounded-xl border border-white/10 bg-[#0B1220] p-1 shadow-2xl">
+              {moreItems.map((item) => (
+                <Link key={item.href} href={item.href} className={`rounded-lg px-3 py-2 text-sm ${pathname === item.href ? 'bg-cyan-500/15 text-cyan-400' : 'text-slate-300 hover:bg-slate-800/60'}`}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </details>
         </nav>
 
         {/* Action button */}
         <div className="hidden md:flex items-center gap-3">
           <Link
-            href="/inspect"
+            href="/report"
             className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-teal-500 px-4 py-2 text-xs font-semibold text-slate-950 shadow-md transition hover:opacity-95 hover:shadow-cyan-500/25"
           >
-            <ScanEye className="h-3.5 w-3.5" />
-            New Inspection
+            <Camera className="h-3.5 w-3.5" />
+            Report a pothole
           </Link>
         </div>
 

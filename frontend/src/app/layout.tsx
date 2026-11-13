@@ -4,8 +4,8 @@ import './globals.css'
 import { Navigation } from '@/components/Navigation'
 
 export const metadata: Metadata = {
-  title: 'RoadGuard AI — Road Damage Detection & Infrastructure Intelligence',
-  description: 'AI-Powered Road Damage Detection, Measurement, Severity Analysis & Road Intelligence Platform',
+  title: 'PitScout — Pothole Detection, Mapping & Duplicate-Aware Reporting',
+  description: 'AI-powered pothole detection from images and video, with GPS mapping and one record per physical pothole.',
 }
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
         <footer className="border-t border-white/5 bg-[#080d17] py-6 px-4 md:px-8 text-center text-xs text-slate-500">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
             <div>
-              RoadGuard AI &copy; 2026 &mdash; Automated Road Damage Detector & Analysis System
+              PitScout &copy; 2026 &mdash; AI pothole detection and monitoring
             </div>
             <div className="flex items-center gap-4 text-slate-400">
               <span>RDD2022 CRDDC Standard</span>
